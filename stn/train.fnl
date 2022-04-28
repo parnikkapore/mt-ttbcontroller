@@ -5,12 +5,24 @@
   (?. (get-trip trip) :destination))
 
 ; {:trip "L198" :origin "Pelipper Town" :destination "Meteor Cave" :flags "jPpT:A/1->K/1" :departs-in 20}
+; returns next trip to leave the station that train-rc can serve
 (fn next-trip [station train-rc]
   (local ttb (require :data.ttb))
+  (local rc (require :util.rc))
   (local my-deps (. (require :data) :deps station))
+  (local all-trips-and-times
+    (icollect [_ tripcode (pairs my-deps)]
+      {:trip tripcode :in (ttb.time-to-next station tripcode)}))
+  (local valid-trips-and-times
+    (icollect [_ entry (pairs all-trips-and-times)]
+       (if (rc.matches train-rc (?. (get-trip entry.trip) :traintag))
+         entry)))
   (local trips-and-times
-         (icollect [_ tripcode (pairs my-deps)]
-            {:trip tripcode :in (ttb.time-to-next station tripcode)}))
+    (if (= (length valid-trips-and-times) 0)
+        (do
+          (print (string.format "[%s] Train ineligible for every trip!" station) train-rc)
+          all-trips-and-times)
+        valid-trips-and-times))
   (local best-trip
          (accumulate [best (. trips-and-times 1)
                       i cur (ipairs trips-and-times)]
