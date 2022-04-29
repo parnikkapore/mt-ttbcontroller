@@ -1,3 +1,8 @@
+(local ttb (require :data.ttb))
+(local triptb (. (require :data) :trips))
+(local deptb (. (require :data) :deps))
+(local rc (require :util.rc))
+
 (fn get-trip [trip]
   (?. (require :data) :trips trip))
 
@@ -7,9 +12,7 @@
 ; {:trip "L198" :origin "Pelipper Town" :destination "Meteor Cave" :flags "jPpT:A/1->K/1" :departs-in 20}
 ; returns next trip to leave the station that train-rc can serve
 (fn next-trip [station train-rc]
-  (local ttb (require :data.ttb))
-  (local rc (require :util.rc))
-  (local my-deps (. (require :data) :deps station))
+  (local my-deps (. deptb station))
   (local all-trips-and-times
     (icollect [_ tripcode (pairs my-deps)]
       {:trip tripcode :in (ttb.time-to-next station tripcode)}))
@@ -33,7 +36,6 @@
   best-trip-info)
 
 (fn get-dwell-time [station trip]
-  (local ttb (require :data.ttb))
   (local trip-info (get-trip trip))
   (if
     (not (ttb.does-stop? station trip))
