@@ -40,10 +40,16 @@ $(BUILD_DIR)/%.lua: $(SRC_DIR)/%.fnl
 	@$(FENNEL) --no-compiler-sandbox --require-as-include --compile $< \
 	| sed 's/_G.//g' \
 	| sed 's/require(/F.require(/g' \
-	| sed 's/package.preload/F._/g' \
+	| sed 's/package.preload/F._mods/g' \
 	| sed '1i\
-F._ = F._ or {}\
-function F.require(module) return F._[module]() end\n' \
+F._mods = F._mods or {};\
+F._modc = F._modc or {};\
+function F.require(module)\
+  if F._modc[module] == nil then\
+    F._modc[module] = F._mods[module]()\
+  end\
+  return F._modc[module]\
+end\n' \
 	> $@
 
 # Convenience
