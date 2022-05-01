@@ -63,11 +63,27 @@
         (= platform "")        nil
         (tset station-record tripcode platform))))
   
-  `{:ttb ,ttb :trips ,trips :deps ,deps :pfas ,pfas})
+  {: ttb : trips : deps : pfas})
 
-(fn table-merge [a b] {})
+; Merges two tables, deeply. Cr: https://stackoverflow.com/questions/1283388/
+(fn table-deep-merge [a b]
+  (let [c {}]
+    (each [k v (pairs a)]
+      (tset c k v))
+    (each [k v (pairs b)]
+      (if (and (= (type v) :table) (= (type (. c k)) :table))
+          (tset c k (table-deep-merge (. c k) v))
+          (tset c k v)))
+    c))
+
+(fn add-segment [so-far new-segment-name]
+  (table-deep-merge so-far (gen-segment new-segment-name)))
 
 (fn gen-tables []
-  (gen-segment :A))
+  (local {: ttb : trips : deps : pfas} (->
+    {}
+    (add-segment :A)))
+  
+  `{:ttb ,ttb :trips ,trips :deps ,deps :pfas ,pfas})
 
 {: gen-tables}
