@@ -1,6 +1,5 @@
 (local ttb (require :data.ttb))
 (local triptb (. (require :data) :trips))
-(local deptb (. (require :data) :deps))
 
 (fn get-trip [trip]
   (?. triptb trip))
@@ -21,7 +20,6 @@
 
 (fn update-display [station pattern]
   (local [time-pat header trip-pat num-trips-shown] (or pattern (error "nexttrains: Invalid pattern name!")))
-  (local my-deps (. deptb station))
   (local time-string (rwt.to_string (rwt.now) true))
   (local trips-and-times
          (icollect [_ tripcode (ipairs (ttb.trains-from station))]

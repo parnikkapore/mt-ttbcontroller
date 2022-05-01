@@ -2,6 +2,8 @@
 
 (local ttb (?. (require :data) :ttb))
 (local cycle ttb._cycle)
+(local triptb (?. (require :data) :trips))
+(local util (require :util))
 
 (fn does-stop? [station train]
   (not (= (?. ttb station train) nil)))
@@ -42,16 +44,19 @@
       nil
       (rwt.last_rpt (rwt.add (rwt.now) delay) cycle offset)))
 
-(fn trains-from [station]
-    (local trips (?. (require :data) :trips))
-    (icollect [train time (pairs (or (. ttb station) []))]
-      (when (and (~= time nil)
-                 (~= (. trips train :destination) station))
-        train)))
+; Returns the tripcodes of trains stopping and leaving the given station.
+(local trains-from
+  (util.memoize (fn do-trains-from [station]
+      (icollect [train time (pairs (or (. ttb station) []))]
+        (when (and (~= time nil)
+                   (~= (. triptb train :destination) station))
+          train)))))
 
-{:does-stop? does-stop?
- :time-to-next time-to-next
- :time-of-next time-of-next
- :time-from-last time-from-last
- :time-of-last time-of-last
- :trains-from trains-from}
+{
+ : does-stop?
+ : time-to-next
+ : time-of-next
+ : time-from-last
+ : time-of-last
+ : trains-from
+}
