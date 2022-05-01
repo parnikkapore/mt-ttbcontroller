@@ -5,7 +5,7 @@
   (?. triptb trip))
 
 (local patterns {
-  ; pat  time-pat              header                      trip-pat                num-trips-shown                   
+  ; pat  time-pat              header                      trip-pat                num-trips-shown
   :nlcd ["\n\n\n\n  Time:  %s" ": Next trains :\n"         "%-10s %4s\n%-15s\n"    4]
   :lcd  [" |  | Time: %s"      "Next trains | "            "%-8s %3s | %-12s | "   2]
   :txtl ["Time:  %s"           "From this station %8.8s\n" "%-5.5s %3.3s %-.16s\n" 3]
