@@ -51,7 +51,19 @@
     (tset deps trip-info.origin (or (. deps trip-info.origin) {}))
     (table.insert (. deps trip-info.origin) trip-id))
   
-  `{:ttb ,ttb :trips ,trips :deps ,deps})
+  ; And now parse the platform assignments table
+  (local pfas {})
+  (local pfa-file (csv.open (string.format "data/%s-pfa.csv" segment) {"header" true}))
+  (each [line (pfa-file:lines)]
+    (tset pfas line.Station {})
+    (local station-record (. pfas line.Station))
+    (each [tripcode platform (pairs line)]
+      (if
+        (= tripcode "Station") nil
+        (= platform "")        nil
+        (tset station-record tripcode platform))))
+  
+  `{:ttb ,ttb :trips ,trips :deps ,deps :pfas ,pfas})
 
 (fn table-merge [a b] {})
 

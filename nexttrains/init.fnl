@@ -1,5 +1,6 @@
 (local ttb (require :data.ttb))
 (local triptb (. (require :data) :trips))
+(local pfatb (?. (require :data) :pfas))
 
 (fn get-trip [trip]
   (?. triptb trip))
@@ -18,18 +19,32 @@
         true               (.. (math.ceil (/ time (* 60 60))) "h")))
   (string.format pattern trip time-string dest))
 
-(fn update-display [station pattern]
-  (local [time-pat header trip-pat num-trips-shown] (or pattern (error "nexttrains: Invalid pattern name!")))
-  (local time-string (rwt.to_string (rwt.now) true))
-  (local trips-and-times
+(local next-deps-cache {})
+; Get a sorted list of next trains to leave a station
+(fn get-next-deps [station]
+  (when (< (rwt.diff (rwt.now) (or (?. next-deps-cache station 1 :time) 0)) 0)
+    ; First train on manifest has left: time to refresh!
+    (local trips-and-times
          (icollect [_ tripcode (ipairs (ttb.trains-from station))]
-            {:trip tripcode :in (ttb.time-to-next station tripcode)}))
-  (table.sort trips-and-times #(< $1.in $2.in))
+            {:trip tripcode :time (ttb.time-of-next station tripcode)}))
+    (table.sort trips-and-times #(> (rwt.diff $1.time $2.time) 0))
+    (tset next-deps-cache station trips-and-times))
+  (. next-deps-cache station))
+
+(fn update-display [station pattern platform]
+  (local [time-pat header trip-pat num-trips-shown]
+         (or pattern (error "nexttrains: Invalid pattern name!")))
+  (local time-string (rwt.to_string (rwt.now) true))
+  (local trips-and-waits
+    (icollect [_ entry (ipairs (get-next-deps station))]
+      (if (or (= (?. pfatb station entry.trip) platform)
+              (= platform nil))
+          {:trip entry.trip :in (rwt.diff (rwt.now) entry.time)})))
   (digiline_send "lcd_clock"
     (string.format time-pat time-string))
   (digiline_send "lcd_nexttrains"
     (table.concat
-      (icollect [i trip (ipairs trips-and-times)
+      (icollect [i trip (ipairs trips-and-waits)
                  :into [(string.format header time-string)]
                  :until (> i num-trips-shown)]
         (print-record trip.trip
@@ -37,8 +52,8 @@
                       (. (get-trip trip.trip) :destination)
                       trip-pat)))))
 
-(fn nexttrains [station pattern blinky-pin]
+(fn nexttrains [station pattern blinky-pin platform]
   (when (and event.on (= event.pin.name blinky-pin))
-    (update-display station (. patterns pattern))))
+    (update-display station (. patterns pattern) platform)))
 
 nexttrains

@@ -4,9 +4,11 @@
 
 (import-macros {: gen-tables} :data.gen-tables)
 
-(let [{: ttb : trips : deps} (gen-tables)]
+(let [{: ttb : trips : deps : pfas} (gen-tables)]
   (pp ttb)
   (print)
   (pp trips)
   (print)
-  (pp deps))
+  (pp deps)
+  (print)
+  (pp pfas))

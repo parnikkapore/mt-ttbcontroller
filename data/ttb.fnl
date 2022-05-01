@@ -3,10 +3,11 @@
 (local ttb (?. (require :data) :ttb))
 (local cycle ttb._cycle)
 (local triptb (?. (require :data) :trips))
+(local pfatb (?. (require :data) :pfas))
 (local util (require :util))
 
 (fn does-stop? [station train]
-  (not (= (?. ttb station train) nil)))
+  (~= (?. ttb station train) nil))
 
 (fn time-to-next [station train delay]
     (local offset (?. ttb station train))
@@ -49,7 +50,8 @@
   (util.memoize (fn do-trains-from [station]
       (icollect [train time (pairs (or (. ttb station) []))]
         (when (and (~= time nil)
-                   (~= (. triptb train :destination) station))
+                   (~= (. triptb train :destination) station)
+                   (~= (?. pfatb station train) nil))
           train)))))
 
 {
