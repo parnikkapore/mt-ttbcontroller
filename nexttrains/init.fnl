@@ -5,19 +5,68 @@
 (fn get-trip [trip]
   (?. triptb trip))
 
+; : Next trains :
+; L123a Pfm 1 34m
+; Omenutleikque
+(fn nlcd-pattern [time trips]
+  (local msgs (string.format "\n\n\n\n  Time:  %s" time))
+  (local main
+    (table.concat
+      (icollect [i trip (ipairs trips)
+                :into [": Next trains:\n"]
+                :until (> i 4)]
+        (string.format "%-5s Pfm %-1s %3s\n%-15s\n"
+                       trip.tripcode
+                       (or trip.platform "-")
+                       trip.in
+                       trip.destination))))
+  (values msgs main))
+
+; Next trains
+; L123a 1 34m
+; Omenutleikq
+
+(fn lcd-pattern [time trips]
+  (local msgs (string.format " |  | Time: %s" time))
+  (local main
+    (table.concat
+      (icollect [i trip (ipairs trips)
+                :into ["Next trains | "]
+                :until (> i 2)]
+        (string.format "%-5s %1s %3s | %-12s | "
+                       trip.tripcode
+                       (or trip.platform "-")
+                       trip.in
+                       trip.destination))))
+  (values msgs main))
+
+; From this station    04:50
+; R103  Omenutleikque 12 34m
+; L888a *Does not stop*
+(fn txtl-pattern [time trips]
+  (local msgs (string.format "Time: %s" time))
+  (local main
+    (table.concat
+      (icollect [i trip (ipairs trips)
+                :into [(string.format "From this station %8.8s\n" time)]
+                :until (> i 3)]
+        (string.format "%-5s %-13s %2s %3s\n"
+                       trip.tripcode
+                       trip.destination
+                       (or trip.platform "-")
+                       trip.in))))
+  (values msgs main))
+
 (local patterns {
-  ; pat  time-pat              header                      trip-pat                num-trips-shown
-  :nlcd ["\n\n\n\n  Time:  %s" ": Next trains :\n"         "%-10s %4s\n%-15s\n"    4]
-  :lcd  [" |  | Time: %s"      "Next trains | "            "%-8s %3s | %-12s | "   2]
-  :txtl ["Time:  %s"           "From this station %8.8s\n" "%-5.5s %3.3s %-.16s\n" 3]
+  :nlcd nlcd-pattern
+  :lcd  lcd-pattern
+  :txtl txtl-pattern
 })
 
-(fn print-record [trip time dest pattern]
-  (local time-string
-    (if (< time 60)        (.. time "s")
-        (< time (* 60 60)) (.. (math.ceil (/ time 60)) "m")
-        true               (.. (math.ceil (/ time (* 60 60))) "h")))
-  (string.format pattern trip time-string dest))
+(fn format-time [time]
+  (if (< time 60)        (.. time "s")
+      (< time (* 60 60)) (.. (math.ceil (/ time 60)) "m")
+      true               (.. (math.ceil (/ time (* 60 60))) "h")))
 
 (local next-deps-cache {})
 ; Get a sorted list of next trains to leave a station
@@ -31,29 +80,23 @@
     (tset next-deps-cache station trips-and-times))
   (. next-deps-cache station))
 
-(fn update-display [station pattern platform]
-  (local [time-pat header trip-pat num-trips-shown]
-         (or pattern (error "nexttrains: Invalid pattern name!")))
+(fn update-display [station pattern-name platform]
+  (local pattern (or (. patterns pattern-name) (error "nexttrains: Invalid pattern name!")))
   (local time-string (rwt.to_string (rwt.now) true))
   (local trips-and-waits
     (icollect [_ entry (ipairs (get-next-deps station))]
-      (if (or (= (?. pfatb station entry.trip) platform)
-              (= platform nil))
-          {:trip entry.trip :in (rwt.diff (rwt.now) entry.time)})))
-  (digiline_send "lcd_clock"
-    (string.format time-pat time-string))
-  (digiline_send "lcd_nexttrains"
-    (table.concat
-      (icollect [i trip (ipairs trips-and-waits)
-                 :into [(string.format header time-string)]
-                 :until (> i num-trips-shown)]
-        (print-record trip.trip
-                      trip.in
-                      (. (get-trip trip.trip) :destination)
-                      trip-pat)))))
+      (if (or (= platform nil)
+              (= (?. pfatb station entry.trip) platform))
+          { :tripcode entry.trip 
+            :in (format-time (rwt.diff (rwt.now) entry.time))
+            :platform (?. pfatb station entry.trip)
+            :destination (. (get-trip entry.trip) :destination)})))
+  (local (msgs-text main-text) (pattern time-string trips-and-waits))
+  (digiline_send "lcd_clock" msgs-text)
+  (digiline_send "lcd_nexttrains" main-text))
 
 (fn nexttrains [station pattern blinky-pin platform]
   (when (and event.on (= event.pin.name blinky-pin))
-    (update-display station (. patterns pattern) platform)))
+    (update-display station pattern platform)))
 
 nexttrains
