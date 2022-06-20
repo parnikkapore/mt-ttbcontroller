@@ -43,12 +43,13 @@
 ; From this station    04:50
 ; R103  Omenutleikque 12 34m
 ; L888a *Does not stop*
-(fn txtl-pattern [time trips]
+(fn txtl-pattern [time trips platform]
   (local msgs (string.format "Time: %s" time))
+  (local header-fstring (if platform "From this platform %7.7s\n" "From this station %8.8s\n"))
   (local main
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into [(string.format "From this station %8.8s\n" time)]
+                :into [(string.format header-fstring time)]
                 :until (> i 3)]
         (string.format "%-5s %-13s %2s %3s\n"
                        trip.tripcode
@@ -82,7 +83,8 @@
 
 (fn update-display [station pattern-name platform]
   (local pattern (or (. patterns pattern-name) (error "nexttrains: Invalid pattern name!")))
-  (local time-string (rwt.to_string (rwt.now) true))
+  (local time-tbl (rwt.now))
+  (local time-string (string.format "%2d:%02d" time-tbl.m time-tbl.s))
   (local trips-and-waits
     (icollect [_ entry (ipairs (get-next-deps station))]
       (if (or (= platform nil)
@@ -91,7 +93,7 @@
             :in (format-time (rwt.diff (rwt.now) entry.time))
             :platform (?. pfatb station entry.trip)
             :destination (. (get-trip entry.trip) :destination)})))
-  (local (msgs-text main-text) (pattern time-string trips-and-waits))
+  (local (msgs-text main-text) (pattern time-string trips-and-waits platform))
   (digiline_send "lcd_clock" msgs-text)
   (digiline_send "lcd_nexttrains" main-text))
 

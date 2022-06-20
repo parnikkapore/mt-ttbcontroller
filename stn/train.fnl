@@ -83,7 +83,7 @@
     (print (string.format "%s: [%s] %s arrived w/ %s" (rwt.to_string (rwt.now) true) name (get_line)
                         ((. (require :data.ttb) :time-to-next) name (get_line)))))
   (local side (or side "L"))
-  (local stopping-rcs (or stopping-rcs []))
+  (local stopping-rcs (or stopping-rcs ""))
   (local terminates-here? (= (train-destination (get_line)) name))
   (if terminates-here?
     (let [next-trip-info (next-trip name (get_rc))
