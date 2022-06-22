@@ -13,7 +13,7 @@
   (local main
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into [": Next trains:\n"]
+                :into [": Next trains :\n"]
                 :until (> i 4)]
         (string.format "%-5s Pfm %-1s %3s\n%-15s\n"
                        trip.tripcode
@@ -25,7 +25,6 @@
 ; Next trains
 ; L123a 1 34m
 ; Omenutleikq
-
 (fn lcd-pattern [time trips]
   (local msgs (string.format " |  | Time: %s" time))
   (local main
@@ -45,17 +44,25 @@
 ; L888a *Does not stop*
 (fn txtl-pattern [time trips platform]
   (local msgs (string.format "Time: %s" time))
-  (local header-fstring (if platform "From this platform %7.7s\n" "From this station %8.8s\n"))
   (local main
+  (if platform
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into [(string.format header-fstring time)]
+                :into [(string.format "From this platform %7.7s\n" time)]
+                :until (> i 3)]
+        (string.format "%-5s %-16s %3s\n"
+                       trip.tripcode
+                       trip.destination
+                       trip.in)))
+    (table.concat
+      (icollect [i trip (ipairs trips)
+                :into [(string.format "From this station %8.8s\n" time)]
                 :until (> i 3)]
         (string.format "%-5s %-13s %2s %3s\n"
                        trip.tripcode
                        trip.destination
                        (or trip.platform "-")
-                       trip.in))))
+                       trip.in)))))
   (values msgs main))
 
 (local patterns {
