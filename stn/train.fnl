@@ -11,14 +11,15 @@
 
 ; {:trip "L198" :origin "Pelipper Town" :destination "Meteor Cave" :flags "jPpT:A/1->K/1" :departs-in 20}
 ; returns next trip to leave the station that train-rc can serve
-(fn next-trip [station train-rc]
+(fn next-trip [station train-rc platform-code]
   (local my-deps (. deptb station))
   (local all-trips-and-times
     (icollect [_ tripcode (pairs my-deps)]
       {:trip tripcode :in (ttb.time-to-next station tripcode)}))
   (local valid-trips-and-times
     (icollect [_ entry (pairs all-trips-and-times)]
-       (if (rc.matches train-rc (?. (get-trip entry.trip) :traintag))
+       (if (rc.matches (.. train-rc " " (or platform-code ""))
+                       (?. (get-trip entry.trip) :traintag))
          entry)))
   (local trips-and-times
     (if (= (length valid-trips-and-times) 0)
@@ -78,12 +79,11 @@
                            close-time
                            (if reverse? "R" ""))))
 
-(fn handle-train [name side reverse? stopping-rcs]
+(fn handle-train [name side reverse? platform-code settings]
   (when S.DEBUG
     (print (string.format "%s: [%s] %s arrived w/ %s" (rwt.to_string (rwt.now) true) name (get_line)
                         ((. (require :data.ttb) :time-to-next) name (get_line)))))
   (local side (or side "L"))
-  (local stopping-rcs (or stopping-rcs ""))
   (local terminates-here? (= (train-destination (get_line)) name))
   (if terminates-here?
     (let [next-trip-info (next-trip name (get_rc))
