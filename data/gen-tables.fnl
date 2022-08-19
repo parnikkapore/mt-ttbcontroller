@@ -82,7 +82,8 @@
 (fn gen-tables []
   (local {: ttb : trips : deps : pfas} (->
     {}
-    (add-segment :A)))
+    (add-segment :A)
+    (add-segment :B)))
   
   `{:ttb ,ttb :trips ,trips :deps ,deps :pfas ,pfas})
 
