@@ -1,5 +1,6 @@
 ;# MACRO
 
+((require :util.env))
 ; Returns an easy-to-use timetable and departures table
 ; for use in the rest of the system.
 ; It's in a macro because this should be done compile-time +
@@ -75,9 +76,18 @@
           (tset c k (table-deep-merge (. c k) v))
           (tset c k v)))
     c))
+    
+; Merge two arrays
+(fn array-merge [a b]
+  (let [c {}]
+    (each [k v (ipairs a)]
+      (tset c k v))
+    (each [_ v (ipairs b)]
+      (table.insert c v))
+    c))
 
 (fn add-segment [so-far new-segment-name]
-  (table-deep-merge so-far (gen-segment new-segment-name)))
+  (table.merge_smart_deep so-far (gen-segment new-segment-name)))
 
 (fn gen-tables []
   (local {: ttb : trips : deps : pfas} (->

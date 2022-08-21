@@ -1,8 +1,8 @@
 ; Service definitions
-(local L20/1 {:flags "L" :traintag "L"}) ; :traintag ["L" "Nlw:p8"]
-(local L20/2 {:flags "L" :traintag "L"}) ; :traintag ["L" "Nlw:p8"]
-(local R20/1 {:flags "R" :traintag "R"}) ; :traintag ["R" "Nlw:p7"]
-(local R20/2 {:flags "R" :traintag "R"}) ; :traintag ["R" "Nlw:p7"]
+(local L20/1 {:flags "L Cmo:p4r->B/1" :traintag :L})
+(local L20/2 {:flags "L" :traintag [:L :Nlw:pW]})
+(local R20/1 {:flags "R" :traintag :R})
+(local R20/2 {:flags "R" :traintag [:R :Nlw:pW]})
 
 ; Tripcode mappings
 {

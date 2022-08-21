@@ -2,6 +2,7 @@
 (local triptb (. (require :data) :trips))
 (local deptb (. (require :data) :deps))
 (local rc (require :util.rc))
+(local { : ipairs-single } (require :util))
 
 (fn get-trip [trip]
   (?. (require :data) :trips trip))
@@ -18,9 +19,11 @@
       {:trip tripcode :in (ttb.time-to-next station tripcode)}))
   (local valid-trips-and-times
     (icollect [_ entry (pairs all-trips-and-times)]
-       (if (rc.matches (.. train-rc " " (or platform-code ""))
-                       (?. (get-trip entry.trip) :traintag))
-         entry)))
+      (let [combined-rc (.. (or train-rc "") " " (or platform-code ""))]
+        (if (accumulate [matches true
+                         i cur-rc (ipairs-single (?. (get-trip entry.trip) :traintag))]
+                        (and matches (rc.matches combined-rc cur-rc)))
+            entry))))
   (local trips-and-times
     (if (= (length valid-trips-and-times) 0)
         (do
@@ -86,7 +89,7 @@
   (local side (or side "L"))
   (local terminates-here? (= (train-destination (get_line)) name))
   (if terminates-here?
-    (let [next-trip-info (next-trip name (get_rc))
+    (let [next-trip-info (next-trip name (get_rc) platform-code)
           {: trip : origin : destination : flags : departs-in} next-trip-info
           (wait-time close-time) (get-door-times departs-in)]
       (when S.DEBUG

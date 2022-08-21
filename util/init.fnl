@@ -12,7 +12,18 @@
 (fn fallback [value fallback-value]
   (if (not= value nil) value fallback-value))
 
+; ipairs but it works with single values
+(fn ipairs-single [value]
+  (if (= (type value) :table)
+      (ipairs value) ; use native code
+      (do
+        (var gone? false)
+        (fn ipairs-single-iterator [s k]
+          (if (not= k nil) nil (values 0 s)))
+        (values ipairs-single-iterator value nil))))
+
 {
  : memoize
  : fallback
+ : ipairs-single
 }
