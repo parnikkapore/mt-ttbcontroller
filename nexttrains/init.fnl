@@ -73,8 +73,8 @@
 
 (fn format-time [time]
   (if (< time 60)        (.. time "s")
-      (< time (* 60 60)) (.. (math.ceil (/ time 60)) "m")
-      true               (.. (math.ceil (/ time (* 60 60))) "h")))
+      (< time (* 60 60)) (.. (math.floor (/ time 60)) "m")
+      true               (.. (math.floor (/ time (* 60 60))) "h")))
 
 (local next-deps-cache {})
 ; Get a sorted list of next trains to leave a station

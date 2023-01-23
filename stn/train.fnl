@@ -39,24 +39,29 @@
   (tset best-trip-info :departs-in best-trip.in)
   best-trip-info)
 
+(fn check-on-time [time station trip offset]
+  (local offset (or offset 0))
+  (local margin (if S.PEDANTIC 1 10))
+  (when (< time (- offset margin))
+    (print (string.format "[%s] Train %s is early (%s/%ss)!"
+                                station trip time offset)))
+  (when (< (+ offset margin) time)
+    (print (string.format "[%s] Train %s is late (%s/%ss)!"
+                                station trip time offset))))
+
 (fn get-dwell-time [station trip]
   (local trip-info (get-trip trip))
   (if
     (not (ttb.does-stop? station trip))
-      (do
-        (print (string.format "[%s] Train %s isn't supposed to be here!" station trip))
-        10) ; Fallback
+      (do (print (string.format "[%s] Train %s isn't supposed to be here!" station trip))
+          10) ; Fallback
     (< (ttb.time-to-next station trip) (ttb.time-from-last station trip)) ; early
       (let [time-to-next (ttb.time-to-next station trip)]
-        (when (> time-to-next 15)
-          (print (string.format "[%s] Train %s is early (%ss)!"
-                                station trip time-to-next)))
-        (ttb.time-to-next station trip))
+        (check-on-time (- time-to-next) station trip -13)
+        time-to-next)
     ; late
       (let [time-from-last (ttb.time-from-last station trip)]
-        (when (> time-from-last 5)
-          (print (string.format "[%s] Train %s is late (%ss)!"
-                                station trip time-from-last)))
+        (check-on-time time-to-next station trip)
         0)))
 
 ; (wait-time close-time)
@@ -96,7 +101,7 @@
         (print (string.format "%s: [%s] %s -> %s" (rwt.to_string (rwt.now) true) name (get_line) trip)))
       (set_line trip)
       (set_rc flags)
-      (atc_set_text_outside (string.format "%s\n%s -> %s" trip origin destination))
+      (atc_set_text_outside (string.format "%s\n%s ➜ %s" trip origin destination))
       (atc_set_text_inside name)
       (schedule_in wait-time :dep)
       (command-train side true wait-time close-time reverse?))
