@@ -61,7 +61,7 @@
         time-to-next)
     ; late
       (let [time-from-last (ttb.time-from-last station trip)]
-        (check-on-time time-to-next station trip)
+        (check-on-time time-from-last station trip)
         0)))
 
 ; (wait-time close-time)
