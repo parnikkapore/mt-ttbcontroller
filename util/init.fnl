@@ -7,7 +7,7 @@
     (when (= (. memo-table arg) nil)
       (tset memo-table arg (function arg)))
     (. memo-table arg)))
-    
+
 ; Returns the given value, or the fallback if it's nil
 (fn fallback [value fallback-value]
   (if (not= value nil) value fallback-value))
@@ -17,13 +17,12 @@
   (if (= (type value) :table)
       (ipairs value) ; use native code
       (do
-        (var gone? false)
         (fn ipairs-single-iterator [s k]
           (if (not= k nil) nil (values 0 s)))
         (values ipairs-single-iterator value nil))))
 
 {
- : memoize
- : fallback
- : ipairs-single
+  : memoize
+  : fallback
+  : ipairs-single
 }
