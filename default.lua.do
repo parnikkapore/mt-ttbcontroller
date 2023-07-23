@@ -12,9 +12,9 @@ fennel --no-compiler-sandbox --require-as-include --compile "${ORIGINAL}" |
 F._mods = {};\
 F._modc = {};\
 function F.require(module)\
-    if F._modc[module] == nil then\
-        F._modc[module] = F._mods[module]()\
-    end\
-return F._modc[module]\
+  if F._modc[module] == nil then\
+    F._modc[module] = F._mods[module]()\
+  end\
+  return F._modc[module]\
 end\n' \
     > $3
