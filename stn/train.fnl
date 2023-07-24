@@ -27,7 +27,8 @@
   (local trips-and-times
     (if (= (length valid-trips-and-times) 0)
         (do
-          (print (string.format "[%s] Train ineligible for every trip!" station) train-rc)
+          (print (string.format "[%s] Train ineligible for every trip!" station)
+                 train-rc)
           all-trips-and-times)
         valid-trips-and-times))
   (local best-trip
@@ -39,30 +40,30 @@
   (tset best-trip-info :departs-in best-trip.in)
   best-trip-info)
 
-(fn check-on-time [time station trip offset]
-  (local offset (or offset 0))
+(fn offset-from-timetable [station trip]
+  (local time-to-next (ttb.time-to-next station trip))
+  (local time-from-last (ttb.time-from-last station trip))
+  (if (< time-to-next time-from-last) ; early
+      (- time-to-next)
+      time-from-last))
+
+(fn check-on-time [station trip]
+  (local PLANNED-DWELL 13)
+  (local offset (+ (offset-from-timetable station trip) PLANNED-DWELL))
   (local margin (if S.PEDANTIC 1 10))
-  (when (< time (- offset margin))
-    (print (string.format "[%s] Train %s is early (%s/%ss)!"
-                                station trip time offset)))
-  (when (< (+ offset margin) time)
-    (print (string.format "[%s] Train %s is late (%s/%ss)!"
-                                station trip time offset))))
+  (when (< offset (- margin))
+    (print (string.format "[%s] Train %s is early (%ss)!" station trip offset)))
+  (when (< margin offset)
+    (print (string.format "[%s] Train %s is late (%ss)!" station trip offset))))
 
 (fn get-dwell-time [station trip]
-  (local trip-info (get-trip trip))
   (if
     (not (ttb.does-stop? station trip))
-      (do (print (string.format "[%s] Train %s isn't supposed to be here!" station trip))
-          10) ; Fallback
-    (< (ttb.time-to-next station trip) (ttb.time-from-last station trip)) ; early
-      (let [time-to-next (ttb.time-to-next station trip)]
-        (check-on-time (- time-to-next) station trip -13)
-        time-to-next)
-    ; late
-      (let [time-from-last (ttb.time-from-last station trip)]
-        (check-on-time time-from-last station trip)
-        0)))
+    (do
+      (print (string.format "[%s] Train %s isn't supposed to be here!" station trip))
+      10) ; Fallback
+    (let [delay-needed (- (offset-from-timetable station trip))]
+      (math.max delay-needed 0))))
 
 ; (wait-time close-time)
 (fn get-door-times [dwell-time]
@@ -88,17 +89,26 @@
                            (if reverse? "R" ""))))
 
 (fn handle-train [name side reverse? platform-code settings]
-  (when S.DEBUG
-    (print (string.format "%s: [%s] %s arrived w/ %s" (rwt.to_string (rwt.now) true) name (get_line)
-                        ((. (require :data.ttb) :time-to-next) name (get_line)))))
   (local side (or side "L"))
-  (local terminates-here? (= (train-destination (get_line)) name))
+  (local trip-id (get_line))
+  (local terminates-here? (= (train-destination trip-id) name))
+  (when S.DEBUG
+    (print (string.format "%s: [%s] %s arrived w/ %s"
+                          (rwt.to_string (rwt.now) true)
+                          name
+                          trip-id
+                          (ttb.time-to-next name trip-id))))
+  (check-on-time name trip-id)
   (if terminates-here?
     (let [next-trip-info (next-trip name (get_rc) platform-code)
           {: trip : origin : destination : flags : departs-in} next-trip-info
           (wait-time close-time) (get-door-times departs-in)]
       (when S.DEBUG
-        (print (string.format "%s: [%s] %s -> %s" (rwt.to_string (rwt.now) true) name (get_line) trip)))
+        (print (string.format "%s: [%s] %s -> %s"
+                              (rwt.to_string (rwt.now) true)
+                              name
+                              trip-id
+                              trip)))
       (set_line trip)
       (set_rc flags)
       (atc_set_text_outside (string.format "%s\n%s ➜ %s" trip origin destination))
@@ -106,7 +116,7 @@
       (schedule_in wait-time :dep)
       (command-train side true wait-time close-time reverse?))
     ; (not (terminates-here?))
-    (let [departs-in (get-dwell-time name (get_line))
+    (let [departs-in (get-dwell-time name trip-id)
           (wait-time close-time) (get-door-times departs-in)]
       (atc_set_text_inside name)
       (schedule_in wait-time :dep)
