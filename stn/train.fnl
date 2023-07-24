@@ -43,18 +43,22 @@
 (fn offset-from-timetable [station trip]
   (local time-to-next (ttb.time-to-next station trip))
   (local time-from-last (ttb.time-from-last station trip))
-  (if (< time-to-next time-from-last) ; early
+  (if (or (= time-to-next nil) (= time-from-last nil))
+      nil
+      (< time-to-next time-from-last) ; early
       (- time-to-next)
       time-from-last))
 
 (fn check-on-time [station trip]
   (local PLANNED-DWELL 13)
-  (local offset (+ (offset-from-timetable station trip) PLANNED-DWELL))
-  (local margin (if S.PEDANTIC 1 10))
-  (when (< offset (- margin))
-    (print (string.format "[%s] Train %s is early (%ss)!" station trip offset)))
-  (when (< margin offset)
-    (print (string.format "[%s] Train %s is late (%ss)!" station trip offset))))
+  (local raw-offset (offset-from-timetable station trip))
+  (when (~= raw-offset nil)
+    (local offset (+ raw-offset PLANNED-DWELL))
+    (local margin (if S.PEDANTIC 1 10))
+    (when (< offset (- margin))
+      (print (string.format "[%s] Train %s is early (%ss)!" station trip offset)))
+    (when (< margin offset)
+      (print (string.format "[%s] Train %s is late (%ss)!" station trip offset)))))
 
 (fn get-dwell-time [station trip]
   (if
