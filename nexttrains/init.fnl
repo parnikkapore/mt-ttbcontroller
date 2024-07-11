@@ -5,24 +5,24 @@
 (fn get-trip [trip]
   (?. triptb trip))
 
-; : Next trains :
-; L123a Pfm 1 34m
+; Train  Plat In
+; L123a  12   34m
 ; Omenutleikque
 (fn nlcd-pattern [time trips]
   (local msgs (string.format "\n\n\n\n  Time:  %s" time))
   (local main
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into [": Next trains :\n"]
+                :into ["Train  Plat In \n"]
                 :until (> i 4)]
-        (string.format "%-5s Pfm %-1s %3s\n%-15s\n"
+        (string.format "%-6s %-4s %3s\n%-15s\n"
                        trip.tripcode
                        (or trip.platform "-")
                        trip.in
                        trip.destination))))
   (values msgs main))
 
-; Next trains
+; Nr   Pl In
 ; L123a 1 34m
 ; Omenutleikq
 (fn lcd-pattern [time trips]
@@ -30,7 +30,7 @@
   (local main
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into ["Next trains | "]
+                :into ["Nr   Pl In  | "]
                 :until (> i 2)]
         (string.format "%-5s %1s %3s | %-12s | "
                        trip.tripcode
@@ -39,7 +39,7 @@
                        trip.destination))))
   (values msgs main))
 
-; From this station    04:50
+; Train To          Plat In
 ; R103  Omenutleikque 12 34m
 ; L888a *Does not stop*
 (fn txtl-pattern [time trips platform]
@@ -48,7 +48,7 @@
   (if platform
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into [(string.format "From this platform %7.7s\n" time)]
+                :into ["Train To               In \n"]
                 :until (> i 3)]
         (string.format "%-5s %-16s %3s\n"
                        trip.tripcode
@@ -56,7 +56,7 @@
                        trip.in)))
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into [(string.format "From this station %8.8s\n" time)]
+                :into ["Train To          Plat In \n"]
                 :until (> i 3)]
         (string.format "%-5s %-13s %2s %3s\n"
                        trip.tripcode
