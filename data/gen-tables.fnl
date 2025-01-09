@@ -46,24 +46,24 @@
               (set our-depinfo.destination station))
             ; Save our changes
             (tset trips train our-depinfo))))))
-  
+
   ; Generate the departures index from the trip info table
   (each [trip-id trip-info (pairs trips)]
     (tset deps trip-info.origin (or (. deps trip-info.origin) {}))
     (table.insert (. deps trip-info.origin) trip-id))
-  
+
   ; And now parse the platform assignments table
   (local pfas {})
   (local pfa-file (csv.open (string.format "data/%s-pfa.csv" segment) {"header" true}))
   (each [line (pfa-file:lines)]
-    (tset pfas line.Station {})
-    (local station-record (. pfas line.Station))
-    (each [tripcode platform (pairs line)]
-      (if
-        (= tripcode "Station") nil
-        (= platform "")        nil
-        (tset station-record tripcode platform))))
-  
+    (tset pfas
+          line.Station
+          (collect [tripcode platform (pairs line)]
+            (if
+              (= tripcode "Station") nil
+              (= platform "")        nil
+              (values tripcode platform)))))
+
   {: ttb : trips : deps : pfas})
 
 ; Merges two tables, deeply. Cr: https://stackoverflow.com/questions/1283388/

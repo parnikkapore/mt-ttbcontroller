@@ -15,7 +15,7 @@
       (icollect [i trip (ipairs trips)
                 :into ["Train  Plat In \n"]
                 :until (> i 4)]
-        (string.format "%-6s %-4s %3s\n%-15s\n"
+        (string.format "%-6s %4s %3s\n%-15s\n"
                        trip.tripcode
                        (or trip.platform "-")
                        trip.in
@@ -39,7 +39,7 @@
                        trip.destination))))
   (values msgs main))
 
-; Train To          Plat In
+; Train Destination   Pl In
 ; R103  Omenutleikque 12 34m
 ; L888a *Does not stop*
 (fn txtl-pattern [time trips platform]
@@ -48,7 +48,7 @@
   (if platform
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into ["Train To               In \n"]
+                :into ["Train Destination      In \n"]
                 :until (> i 3)]
         (string.format "%-5s %-16s %3s\n"
                        trip.tripcode
@@ -56,7 +56,7 @@
                        trip.in)))
     (table.concat
       (icollect [i trip (ipairs trips)
-                :into ["Train To          Plat In \n"]
+                :into ["Train Destination   Pl In \n"]
                 :until (> i 3)]
         (string.format "%-5s %-13s %2s %3s\n"
                        trip.tripcode
@@ -105,7 +105,7 @@
   (digiline_send "lcd_nexttrains" main-text))
 
 (fn nexttrains [station pattern blinky-pin platform]
-  (when (and event.on (= event.pin.name blinky-pin))
+  (when (and (or event.on event.off) (= event.pin.name blinky-pin))
     (update-display station pattern platform)))
 
 nexttrains

@@ -1,6 +1,6 @@
 ; Service definitions
-(local L10/1 {:flags "L" :traintag "L"})
-(local L10/2 {:flags "L jKkL:A/2->A1/2" :traintag :L})
+(local L10/1 {:flags "L Dbo:p1-skip" :traintag "L"})
+(local L10/2 {:flags "L jKkL:A/2->A1/2 Ikc:p2-no-reverse Dbo:eA1/2->p1r" :traintag "L"})
 (local R10/0 {:flags "R Dsm:eA/1->p2 Brl:eA/1->p2 Nlw:eA/1->p3r" :traintag "R"})
 (local R10/1 {:flags "R Brl:eA/2->p3 Dsm:eA/2->p3 Prs:p4->sht1n Prs:sht1n->p1" :traintag [:R :Nlw:pN]})
 
